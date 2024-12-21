@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block  title %}
+    推荐算法
+{% endblock title %}
+
+{% block content %}
+    <div class="pagetitle" style="display: flex;align-items: center">
+        <div style="margin-right: auto">
+            <h1>价格和月销量分析</h1>
+            <nav>
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'home' %}">数据可视化</a></li>
+                    <li class="breadcrumb-item active">价格和月销量分析页面</li>
+                </ol>
+            </nav>
+        </div>
+        <h5>
+            {{ nowTime.year }} - {{ nowTime.month }} - {{ nowTime.day }}
+        </h5>
+    </div>
+
+    <section class="section dashboard">
+    </section>
+
+{% endblock content %}
+
+{% block echarts %}
+<script>
+
+</script>
+{% endblock echarts %}

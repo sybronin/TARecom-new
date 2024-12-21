@@ -1,0 +1,349 @@
+{% extends 'base.html' %}
+
+{% block  title %}
+    价格和月销量分析
+{% endblock title %}
+
+{% block sidebar %}
+    <aside id="sidebar" class="sidebar">
+
+        <ul class="sidebar-nav" id="sidebar-nav">
+
+            <li class="nav-item">
+                <a class="nav-link collapsed" href="{% url 'home' %}">
+                    <i class="bi bi-grid"></i>
+                    <span>首页</span>
+                </a>
+            </li>
+            <li class="nav-heading">个人信息</li>
+            <li class="nav-item">
+                <a class="nav-link collapsed" href="{% url 'changeSelfInfo' %}">
+                    <i class="bi bi-menu-button-wide"></i><span>修改信息</span>
+                </a>
+
+            <li class="nav-item">
+                <a class="nav-link collapsed" href="{% url 'changePassword' %}">
+                    <i class="bi bi-journal-text"></i><span>修改密码</span>
+                </a>
+            </li>
+            <li class="nav-heading">数据表格</li>
+
+            <li class="nav-item">
+                <a class="nav-link collapsed" href="{% url 'tableData' %}">
+                    <i class="bi bi-bar-chart"></i><span>数据操作</span>
+                </a>
+            </li>
+
+            <li class="nav-heading">数据可视化</li>
+
+
+            <li class="nav-item">
+                <a class="nav-link collapsed" href="{% url 'cityChar' %}">
+                    <i class="bi bi-bar-chart"></i><span>城市和景点等级分析</span>
+                </a>
+            </li><!-- End Charts Nav -->
+
+            <li class="nav-item">
+                <a class="nav-link collapsed" href="{% url 'rateChar' %}">
+                    <i class="bi bi-gem"></i><span>评分情况分析</span>
+                </a>
+            </li><!-- End Icons Nav -->
+
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'priceChar' %}">
+                    <i class="bi bi-person"></i>
+                    <span>价格销量分析</span>
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link collapsed" href="{% url 'commentsChar' %}">
+                    <i class="bi bi-question-circle"></i>
+                    <span>评论分析</span>
+                </a>
+            </li>
+
+            <li class="nav-heading">推荐功能</li>
+
+            <li class="nav-item">
+                <a class="nav-link collapsed" href="{% url 'recommendation' %}">
+                    <i class="bi bi-envelope"></i>
+                    <span>推荐算法</span>
+                </a>
+            </li><!-- End Contact Page Nav -->
+
+        </ul>
+
+    </aside>
+{% endblock sidebar %}
+
+{% block content %}
+    <div class="pagetitle" style="display: flex;align-items: center">
+        <div style="margin-right: auto">
+            <h1>价格和月销量分析</h1>
+            <nav>
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'home' %}">数据可视化</a></li>
+                    <li class="breadcrumb-item active">价格和月销量分析页面</li>
+                </ol>
+            </nav>
+        </div>
+        <h5>
+            {{ nowTime.year }} - {{ nowTime.month }} - {{ nowTime.day }}
+        </h5>
+    </div>
+
+    <section class="section dashboard">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">城市选择</h5>
+                        <form action="{% url 'priceChar' %}" method="POST">
+                            <div class="row mb-3">
+                                <label class="col-sm-2 col-form-label">城市</label>
+                                <div class="col-sm-10">
+                                    <select class="form-select" name="province" aria-label="Default select example">
+                                        {% for i in cityList %}
+                                            <option value="{{ i }}">{{ i }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <button style="margin-top: 10px" class="btn-primary">提交</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        <div class="row">
+
+            <div class="col-lg-6">
+
+                <div class="card">
+
+                    <div class="card-body">
+                        <h5 class="card-title">景点价格分析</h5>
+                        <div id="mains" style="width: 100%;height: 450px"></div>
+
+                    </div>
+                </div>
+
+            </div>
+            <div class="col-lg-6">
+
+                <div class="card">
+
+                    <div class="card-body">
+                        <h5 class="card-title">景点销量分析</h5>
+                        <div id="mainsTwo" style="width: 100%;height: 450px"></div>
+
+                    </div>
+                </div>
+
+            </div>
+            <div class="col-lg-6">
+
+                <div class="card">
+
+                    <div class="card-body">
+                        <h5 class="card-title">折扣占比分析</h5>
+                        <div id="mainsThree" style="width: 100%;height: 450px"></div>
+
+                    </div>
+                </div>
+
+            </div>
+
+
+        </div>
+    </section>
+
+{% endblock content %}
+
+{% block echarts %}
+    <script>
+
+        var chartDom = document.getElementById('mains');
+        var myChart = echarts.init(chartDom);
+        var option;
+
+        option = {
+            tooltip: {
+                trigger: 'axis',
+                axisPointer: {
+                    type: 'cross'
+                }
+            },
+            legend: {},
+            toolbox: {
+                show: true,
+                feature: {
+                    saveAsImage: {}
+                }
+            },
+            xAxis: {
+                type: 'category',
+                boundaryGap: false,
+                // prettier-ignore
+                data: {{ echartsData.x1data | safe }}
+            },
+            yAxis: {
+                type: 'value',
+                axisLabel: {
+                    formatter: '{value} 个'
+                },
+                axisPointer: {
+                    snap: true
+                }
+            },
+            visualMap: {
+                show: false,
+                dimension: 0,
+                pieces: [
+                    {
+                        lte: 1,
+                        color: 'red'
+                    },
+                    {
+                        gt: 1,
+                        lte: 4,
+                        color: 'green'
+                    },
+                    {
+                        gt: 4,
+                        lte: 6,
+                        color: 'red'
+                    }
+                ]
+            },
+            series: [
+                {
+                    name: '价格区间',
+                    type: 'line',
+                    smooth: true,
+                    // prettier-ignore
+                    data: {{ echartsData.y1data }},
+                    markArea: {
+                        itemStyle: {
+                            color: 'rgba(255, 173, 177, 0.4)'
+                        },
+                        data: [
+                            [
+                                {
+                                    name: '起伏趋势较高',
+                                    xAxis: '免费'
+                                },
+                                {
+                                    xAxis: '一百元以内'
+                                }
+                            ],
+                            [
+                                {
+                                    name: '较为平缓',
+                                    xAxis: '400元以内'
+                                },
+                                {
+                                    xAxis: '500元以外'
+                                }
+                            ]
+                        ]
+                    }
+                }
+            ]
+        };
+
+        option && myChart.setOption(option);
+
+    </script>
+    <script>
+
+        var chartDom = document.getElementById('mainsTwo');
+        var myChart = echarts.init(chartDom);
+        var option;
+        option = {
+            xAxis: {
+                type: 'category',
+                data: {{ echartsData.x2data | safe }},
+            },
+            yAxis: {
+                type: 'value',
+                name: '销量',
+            },
+            legend: {},
+            dataZoom: [
+                {
+                    show: true,
+                    start: 0,
+                    end: 20
+                },
+            ],
+            series: [{
+                name: '销量',
+                type: 'bar',
+                data: {{ echartsData.y2data }},
+                itemStyle: {
+                    color: '#2f4554',
+                    emphasis: {
+                        color: '#c23531',
+                    }
+                },
+                label: {
+                    show: true,
+                    position: 'top',
+                }
+            }],
+            animationEasing: 'elasticOut',
+            animationDelay: function (idx) {
+                return idx * 100;
+            },
+        }
+        option && myChart.setOption(option);
+    </script>
+    <script>
+
+        var chartDom = document.getElementById('mainsThree');
+        var myChart = echarts.init(chartDom);
+        var option;
+
+        option = {
+            tooltip: {
+                trigger: 'item',
+                formatter: '{a} <br/>{b} : {c} ({d}%)'
+            },
+            legend: {
+                orient:'vertical',
+                left:'left',
+                type:'scroll'
+            },
+            toolbox: {
+                show: true,
+                feature: {
+                    mark: {show: true},
+                    dataView: {show: true, readOnly: false},
+                    restore: {show: true},
+                    saveAsImage: {show: true}
+                }
+            },
+            series: [
+                {
+                    name: '折扣个数',
+                    type: 'pie',
+                    radius: '50%',
+                    emphasis: {
+                        itemStyle:{
+                            shadowBlur:10,
+                            shadowOffsetX: 0,
+                            shadowColor:'rgba(0,0,0,0.5)'
+                        }
+                    },
+                    data: {{ echartsData.discountPieData | safe }}
+                },
+            ]
+        };
+
+        option && myChart.setOption(option);
+
+    </script>
+{% endblock echarts %}
