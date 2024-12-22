@@ -6,7 +6,7 @@ from django.contrib import messages
 from app.models import User,TravelInfo,Comment,UserHistory,UserFavorites
 from django.http import HttpResponse
 from app.utils import GetHomeData,GetPublicData,GetChangSelfIndoData,GetAddCommentsData,GetEchartsData
-from .recommendation import getUser_rating, user_bases_collaborative_filtering
+from .recommendation import get_user_rating, user_bases_collaborative_filtering
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.hashers import check_password
 from django.core.paginator import Paginator
@@ -407,7 +407,7 @@ def recommendation(request):
     userInfo = User.objects.get(username=username)
     year, month, day = GetHomeData.getTimeNow()
 
-    user_rating = getUser_rating()
+    user_rating = get_user_rating()
     recommended = user_bases_collaborative_filtering(userInfo.id, user_rating)
     return render(request, 'recommendation.html', {
         'userInfo': userInfo,
