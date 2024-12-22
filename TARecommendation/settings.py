@@ -83,9 +83,9 @@ pymysql.install_as_MySQLdb()
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
-        "NAME":  "ta_recommendation",
+        "NAME":  "TRA_database",
         "USER": "root",
-        "PASSWORD": "tianwanli2004",
+        "PASSWORD": "root0000",
         "HOST": "localhost",
         "PORT": "3306",
     }

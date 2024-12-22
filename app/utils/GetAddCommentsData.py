@@ -12,15 +12,24 @@ def getTravelInfoById(id):
 
 #增添评论
 def addComents(commentData):
+    year, month, day = getTimeNow()
+    travelInfo = commentData['travelInfo']
 
-   year, month, day = getTimeNow()
-   travelInfo = commentData['travelInfo']
-   travelInfo.comments.append({
-       'author': commentData['userInfo'].username,
-       'score': commentData['rate'],
-       'comment': commentData['content'],
-       'date': str(year) + '-' + str(month) + '-' + str(day),
-       'userId': commentData['userInfo'].id,
-   })
-   travelInfo.comments = json.dumps(travelInfo.comments)
-   travelInfo.save()
+    # 解析 JSON 字符串为 Python 列表
+    if isinstance(travelInfo.comments, str):
+        travelInfo.comments = json.loads(travelInfo.comments)
+
+    # 追加评论
+    travelInfo.comments.append({
+        'author': commentData['userInfo'].username,
+        'score': commentData['rate'],
+        'comment': commentData['content'],
+        'date': str(year) + '-' + str(month) + '-' + str(day),
+        'userId': commentData['userInfo'].id,
+    })
+
+    # 将列表转换回 JSON 字符串
+    travelInfo.comments = json.dumps(travelInfo.comments)
+
+    # 保存数据
+    travelInfo.save()

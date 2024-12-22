@@ -222,6 +222,15 @@ def addComments(request, id):
             content=content,
             rate=rate,
         )
+        # 新加一段
+        GetAddCommentsData.addComents({
+            'id': id,
+            'rate': int(request.POST.get('rate')),
+            'content': request.POST.get('content'),
+            'userInfo': userInfo,
+            'travelInfo': travelInfo,
+        })
+        # 新加一段（结尾）
         new_comment.save()  # 保存评论数据
 
         # 重定向到评论列表页面（可以根据需求修改）
