@@ -1,18 +1,24 @@
-from django.shortcuts import render,redirect
+from django.shortcuts import render, redirect
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from django.contrib import messages
-from app.models import User,TravelInfo,Comment,UserHistory,UserFavorites
+from app.models import User, TravelInfo, Comment, UserHistory, UserFavorites
 from django.http import HttpResponse
-from app.utils import GetHomeData,GetPublicData,GetChangSelfIndoData,GetAddCommentsData,GetEchartsData
-from .recommendation import get_user_rating, user_bases_collaborative_filtering
+from app.utils import GetHomeData, GetPublicData, GetChangSelfIndoData, GetAddCommentsData, GetEchartsData
+from .recommendation import get_user_rating, user_bases_collaborative_filtering, get_travel_info, user_bases_collaborative_filtering
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.hashers import check_password
 from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.utils import timezone
 from django.db.models import Q
+
+# # 超级用户（管理员）引用
+# from django.shortcuts import render, redirect
+# from django.contrib.auth.decorators import login_required
+# from django.http import HttpResponseForbidden
+# from .models import TravelInfo
 
 
 #登录
@@ -37,10 +43,12 @@ def login(request):
         except User.DoesNotExist:
             return HttpResponse('用户名或密码错误')
 
+
 #退出登录
 def logout(request):
     request.session.clear()
     return redirect('/app/login')
+
 
 #用户注册
 def register(request):
@@ -71,30 +79,32 @@ def register(request):
 
             return redirect('/app/login')
 
+
 #首页
 def home(request):
     username = request.session['username']
     userInfo = User.objects.get(username=username)
-    highScoreNum,provinceDicSort, commentsMaxTitle,highfraction,commentsNumMax,provinceTANum = GetHomeData.getHomeTagData()
+    highScoreNum, provinceDicSort, commentsMaxTitle, highfraction, commentsNumMax, provinceTANum = GetHomeData.getHomeTagData()
     #获取首页两个排行榜数据（高分景点推荐榜，销量前十景点榜）
-    top10TA,saleCountTop10 = GetHomeData.getRankingData()
-    year,month,day = GetHomeData.getTimeNow()
+    top10TA, saleCountTop10 = GetHomeData.getRankingData()
+    year, month, day = GetHomeData.getTimeNow()
     #获取用户创建时间数据
     userBarCharData = GetHomeData.getUserCreateTimeData()
 
-    return render(request, 'home.html',{
-        'userInfo':userInfo,
-        'highScoreNum':highScoreNum,
-        'provinceDicSort':provinceDicSort,
-        'commentsMaxTitle':commentsMaxTitle,
-        'highfraction':highfraction,
-        'commentsNumMax':commentsNumMax,
-        'provinceTANum':provinceTANum,
-        'top10TA':top10TA,
-        'nowTime':{'year':year,'month':month,'day':day},
-        'userBarCharData':userBarCharData,
-        'saleCountTop10':saleCountTop10,
+    return render(request, 'home.html', {
+        'userInfo': userInfo,
+        'highScoreNum': highScoreNum,
+        'provinceDicSort': provinceDicSort,
+        'commentsMaxTitle': commentsMaxTitle,
+        'highfraction': highfraction,
+        'commentsNumMax': commentsNumMax,
+        'provinceTANum': provinceTANum,
+        'top10TA': top10TA,
+        'nowTime': {'year': year, 'month': month, 'day': day},
+        'userBarCharData': userBarCharData,
+        'saleCountTop10': saleCountTop10,
     })
+
 
 #个人信息修改
 def changeSelfInfo(request):
@@ -142,7 +152,6 @@ def changePassword(request):
     })
 
 
-
 #景点数据展示表格
 def tableData(request):
     username = request.session['username']
@@ -181,6 +190,7 @@ def tableData(request):
         'tableData': page_obj,  # 将分页对象传递给模板
     })
 
+
 #收藏
 def toggle_favorite(request, travel_info_id):
     # 获取当前用户
@@ -203,6 +213,7 @@ def toggle_favorite(request, travel_info_id):
 
     # 重定向回原来的页面
     return redirect(request.META.get('HTTP_REFERER', 'tableData'))  # 返回上一个页面
+
 
 #添加评论
 def addComments(request, id):
@@ -242,6 +253,7 @@ def addComments(request, id):
         'travelInfo': travelInfo,
         'id': id,
     })
+
 
 #模糊搜素
 def search_travel_info(request):
@@ -292,24 +304,27 @@ def search_travel_info(request):
         'userInfo': userInfo,
         'nowTime': {'year': year, 'month': month, 'day': day},
     })
+
+
 #数据可视化——城市景点等级分析
 def cityChar(request):
     username = request.session['username']
     userInfo = User.objects.get(username=username)
     year, month, day = GetHomeData.getTimeNow()
     #柱状图X、Y数据
-    Xdata,Ydata = GetEchartsData.cityCharDataOne()
+    Xdata, Ydata = GetEchartsData.cityCharDataOne()
     #饼状图数据
     resultData = GetEchartsData.cityCharDataTwo()
     return render(request, 'cityChar.html', {
         'userInfo': userInfo,
         'nowTime': {'year': year, 'month': month, 'day': day},
         'cityCharOneData': {
-            'Xdata':Xdata,
-            'Ydata':Ydata,
+            'Xdata': Xdata,
+            'Ydata': Ydata,
         },
-        'cityCharTwoData':resultData,
+        'cityCharTwoData': resultData,
     })
+
 
 #数据可视化——评分分析
 def rateChar(request):
@@ -322,7 +337,6 @@ def rateChar(request):
     travelList = GetPublicData.getAllTravelInfoMapData(cityList[0])
     charOneData = GetEchartsData.getRateCharDataOne(travelList)
     charTwoData = GetEchartsData.getRateCharDataTwo(travelList)
-
 
     #判断是否进行城市选择请求
     if request.method == "POST":
@@ -339,6 +353,7 @@ def rateChar(request):
         'charTwoData': charTwoData,
     })
 
+
 #数据可视化——价格销量分析（价格、销量、折扣）
 def priceChar(request):
     username = request.session['username']
@@ -349,29 +364,29 @@ def priceChar(request):
     # 未进行城市选择时默认展示全部城市总数据
     travelList = GetPublicData.getAllTravelInfoMapData()
     #价格折线图x、y数据
-    x1data,y1data = GetEchartsData.getPriceCharDataOne(travelList)
+    x1data, y1data = GetEchartsData.getPriceCharDataOne(travelList)
     #销量柱状图x、y数据
-    x2data,y2data = GetEchartsData.getPriceCharDataTwo(travelList)
+    x2data, y2data = GetEchartsData.getPriceCharDataTwo(travelList)
     #折扣数据
     discountPieData = GetEchartsData.getPriceCharDataThree(travelList)
 
     # 判断是否进行城市选择请求
     if request.method == "POST":
         travelList = GetPublicData.getAllTravelInfoMapData(request.POST.get('province'))
-        x1data,y1data = GetEchartsData.getPriceCharDataOne(travelList)
-        x2data,y2data = GetEchartsData.getPriceCharDataTwo(travelList)
+        x1data, y1data = GetEchartsData.getPriceCharDataOne(travelList)
+        x2data, y2data = GetEchartsData.getPriceCharDataTwo(travelList)
         discountPieData = GetEchartsData.getPriceCharDataThree(travelList)
 
     return render(request, 'priceChar.html', {
         'userInfo': userInfo,
         'nowTime': {'year': year, 'month': month, 'day': day},
         'cityList': cityList,
-        'echartsData':{
-            'x1data':x1data,
-            'y1data':y1data,
-            'x2data':x2data,
-            'y2data':y2data,
-            'discountPieData':discountPieData,
+        'echartsData': {
+            'x1data': x1data,
+            'y1data': y1data,
+            'x2data': x2data,
+            'y2data': y2data,
+            'discountPieData': discountPieData,
         }
     })
 
@@ -382,11 +397,11 @@ def commentsChar(request):
     userInfo = User.objects.get(username=username)
     year, month, day = GetHomeData.getTimeNow()
     #评论时间折线图x、y数据
-    x1Data,y1Data = GetEchartsData.getCommentsCharDataOne()
+    x1Data, y1Data = GetEchartsData.getCommentsCharDataOne()
     #评论评分数据
     commentsScorePieData = GetEchartsData.getCommentsCharDataTwo()
     #评论个数数据
-    x2Data,y2Data = GetEchartsData.getCommentsCharDataThree()
+    x2Data, y2Data = GetEchartsData.getCommentsCharDataThree()
     return render(request, 'commentsChar.html', {
         'userInfo': userInfo,
         'nowTime': {'year': year, 'month': month, 'day': day},
@@ -400,18 +415,74 @@ def commentsChar(request):
     })
 
 
+# <editor-fold dec=原始推荐函数>
+#景点推荐（原始函数）
+# def recommendation(request):
+#     username = request.session['username']
+#     userInfo = User.objects.get(username=username)
+#     year, month, day = GetHomeData.getTimeNow()
+#
+#     user_rating = get_user_rating()
+#     recommended = user_bases_collaborative_filtering(userInfo.id, user_rating)
+#     return render(request, 'recommendation.html', {
+#         'userInfo': userInfo,
+#         'nowTime': {'year': year, 'month': month, 'day': day},
+#         'recommended': recommended,
+#
+#     })
+# </editor-fold>
 
-#景点推荐
+# <editor-fold dec=神经网络推荐函数>
+# 景点推荐（修改后函数）
+# 更新 views.py 中的 recommendation 函数
+# def recommendation(request):
+#     username = request.session['username']
+#     userInfo = User.objects.get(username=username)
+#     year, month, day = GetHomeData.getTimeNow()
+#
+#     # 获取用户评分数据
+#     user_rating = get_user_rating()
+#
+#     # 使用神经网络生成推荐
+#     recommended_ids = user_bases_collaborative_filtering(userInfo.id, user_rating, top_n=3)
+#     recommended_info = get_travel_info(recommended_ids)
+#
+#     return render(request, 'recommendation.html', {
+#         'userInfo': userInfo,
+#         'nowTime': {'year': year, 'month': month, 'day': day},
+#         'recommended': recommended_info,  # 提供推荐景点的完整信息
+#     })
+# </editor-fold>
+
+# <editor-fold dec=协同过滤+神经网络 推荐函数>
 def recommendation(request):
+    from itertools import chain
+
+    # 获取用户登录信息
     username = request.session['username']
     userInfo = User.objects.get(username=username)
     year, month, day = GetHomeData.getTimeNow()
 
+    # 获取用户评分数据
     user_rating = get_user_rating()
-    recommended = user_bases_collaborative_filtering(userInfo.id, user_rating)
+
+    # 调用神经网络算法生成推荐结果
+    nn_recommended_ids = user_bases_collaborative_filtering(userInfo.id, user_rating, top_n=3)
+
+    # 调用协同过滤算法生成推荐结果
+    cf_recommended_ids = user_bases_collaborative_filtering(userInfo.id, user_rating, top_n=3)
+
+    # 合并两个算法的推荐结果并去重
+    combined_recommended_ids = list(set(chain(nn_recommended_ids, cf_recommended_ids)))
+
+    # 查询推荐景点的完整信息
+    recommended_info = get_travel_info(combined_recommended_ids)
+
+    # 返回推荐页面
     return render(request, 'recommendation.html', {
         'userInfo': userInfo,
         'nowTime': {'year': year, 'month': month, 'day': day},
-        'recommended': recommended,
-
+        'recommended': recommended_info,  # 提供去重后推荐景点的完整信息
     })
+# </editor-fold>
+
